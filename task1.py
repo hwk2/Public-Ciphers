@@ -32,8 +32,14 @@ bob.generate_pub_key(alpha, bob.priv_key, q)
 alice.generate_priv_key(q)
 alice.generate_pub_key(alpha, alice.priv_key, q)
 
+bob.receive_pub_key(alice.pub_key)
+alice.receive_pub_key(bob.pub_key)
+
 print(f"Bob's Private Key: {bob.priv_key}")
 print(f"Bob's Public Key: {bob.pub_key}")
 
 print(f"Alice's Private Key: {alice.priv_key}")
 print(f"Alice's Public Key: {alice.pub_key}")
+
+print(f"Bob received Alice's Public Key: {bob.other_user_pub_key}")
+print(f"Alice received Bob's Public Key: {alice.other_user_pub_key}")
