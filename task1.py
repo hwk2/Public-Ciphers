@@ -3,15 +3,20 @@ import random
 class User:
     def __init__(self, name):
         self.name = name
-        self.priv_key = "default_private_key"
-        self.pub_key = "default_public_key"
+        self.priv_key = None
+        self.pub_key = None
+        #could be made a list for many pub keys later??
+        self.other_user_pub_key = None
 
-def generate_priv_key(q):
-    return random.randint(1, q-1)
+    def generate_priv_key(self, q):
+        self.priv_key =random.randint(1, q-1)
 
-def generate_pub_key(alpha, priv_key, q):
-    power = pow(alpha, priv_key)
-    return power % q
+    def generate_pub_key(self, alpha, priv_key, q):
+        power = pow(alpha, priv_key)
+        self.pub_key = power % q
+    
+    def receive_pub_key(self, other_user_pub_key):
+        self.other_user_pub_key = other_user_pub_key
 
 # assume both A and B get same IV
 
@@ -21,11 +26,11 @@ alpha = 5
 bob = User('Bob')
 alice = User('Alice')
 
-bob.priv_key = generate_priv_key(q)
-bob.pub_key = generate_pub_key(alpha, bob.priv_key, q)
+bob.generate_priv_key(q)
+bob.generate_pub_key(alpha, bob.priv_key, q)
 
-alice.priv_key = generate_priv_key(q)
-alice.pub_key = generate_pub_key(alpha, alice.priv_key, q)
+alice.generate_priv_key(q)
+alice.generate_pub_key(alpha, alice.priv_key, q)
 
 print(f"Bob's Private Key: {bob.priv_key}")
 print(f"Bob's Public Key: {bob.pub_key}")
