@@ -15,8 +15,8 @@ class User:
         if(self.priv_key is None):
             raise ValueError("Private key not generated yet.")
         else:
-            power = pow(alpha, self.priv_key)
-            self.pub_key = power % q
+            val = pow(alpha, self.priv_key, q)
+            self.pub_key = val
     
     def receive_pub_key(self, other_user_pub_key):
         self.other_user_pub_key = other_user_pub_key
