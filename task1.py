@@ -29,6 +29,17 @@ def encCBC(plaintext, cipher, iv):
         previous_block = encrypted_block
     return ciphertext
 
+def decCBC(ciphertext, cipher, iv):
+    padded_plaintext = b""
+    previous_block = iv
+    for i in range(0, len(ciphertext), AES.block_size):
+        block = ciphertext[i:i+AES.block_size]
+        decrypted_block = cipher.decrypt(block)
+        plaintext_block = bytes(a ^ b for a, b in zip(decrypted_block, previous_block))
+        padded_plaintext += plaintext_block
+        previous_block = block
+    return padded_plaintext
+
 class User:
     def __init__(self, name):
         self.name = name
@@ -66,11 +77,20 @@ class User:
         if(self.secret is None):
             raise ValueError("Secret key not generated yet.")
         
-        cipher = AES.new(key, AES.MODE_ECB)
-        encrypted_message = encCBC(message, cipher, iv)
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        print(f"Encoding message: {message} with key: {key.hex()} and iv: {iv.hex()}")
+        encrypted_message = cipher.encrypt(padding(message.encode()))
         return encrypted_message
     
-    def decode(self, encrypted_message, iv):
+    def decode(self, encrypted_message, key, iv):
+        if(self.secret is None):
+            raise ValueError("Secret key not generated yet.")
+        print(f"Decoding message with secret key: {key.hex()} and iv: {iv.hex()}")
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        paddedPlaintext = cipher.decrypt(encrypted_message)
+        print(f"Padded Plaintext after decryption: {paddedPlaintext}")
+        plaintext = unpadding(paddedPlaintext)
+        return plaintext
             
 
 # assume both A and B get same IV
@@ -109,13 +129,13 @@ print(f"Alice's Secret Key: {(alice.secret)}")
 
 bob_sha256_hash = SHA256.new()
 bob_sha256_hash.update(bob.secret.to_bytes())
-bob_encoded_key = bob_sha256_hash.digest()[:16]
-print("Bob's Encoded Key:", bob_encoded_key.hex())
+bob_symm_key = bob_sha256_hash.digest()[:16]
+print("Bob's Encoded Key:", bob_symm_key.hex())
 
 alice_sha256_hash = SHA256.new()
 alice_sha256_hash.update(alice.secret.to_bytes())
-alice_encoded_key = alice_sha256_hash.digest()[:16]
-print("Alice's Encoded Key:", alice_encoded_key.hex())
+alice_symm_key = alice_sha256_hash.digest()[:16]
+print("Alice's Encoded Key:", alice_symm_key.hex())
 
 bob_message = "Hello Alice!"
 alice_message = "Hello Bob!"
@@ -124,6 +144,14 @@ alice_message = "Hello Bob!"
 iv = get_random_bytes(16)
 print("IV:", iv.hex())
 
-bob_encoded_message = bob.encode(bob_message, bob_encoded_key, iv)
-alice_encoded_message = alice.encode(alice_message, alice_encoded_key, iv)
+bob_encoded_message = bob.encode(bob_message, bob_symm_key, iv)
+alice_encoded_message = alice.encode(alice_message, alice_symm_key, iv)
 
+print(f"Bob's Encoded Message: {bob_encoded_message}")
+print(f"Alice's Encoded Message: {alice_encoded_message}")
+
+bob_decoded_message = bob.decode(alice_encoded_message, bob_symm_key, iv)
+alice_decoded_message = alice.decode(bob_encoded_message, alice_symm_key, iv)
+
+print(f"Bob's Decoded Message: {bob_decoded_message}")
+print(f"Alice's Decoded Message: {alice_decoded_message}")
