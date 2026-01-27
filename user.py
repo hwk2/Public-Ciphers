@@ -40,17 +40,17 @@ class User:
             raise ValueError("Secret key not generated yet.")
         
         cipher = AES.new(key, AES.MODE_CBC, iv)
-        print(f"Encoding message: {message} with key: {key.hex()} and iv: {iv.hex()}")
+        # print(f"Encoding message: {message} with key: {key.hex()} and iv: {iv.hex()}")
         encrypted_message = cipher.encrypt(padding(message.encode()))
         return encrypted_message
     
     def decode(self, encrypted_message, key, iv):
         if(self.secret is None):
             raise ValueError("Secret key not generated yet.")
-        print(f"Decoding message with secret key: {key.hex()} and iv: {iv.hex()}")
+        # print(f"Decoding message with secret key: {key.hex()} and iv: {iv.hex()}")
         cipher = AES.new(key, AES.MODE_CBC, iv)
         paddedPlaintext = cipher.decrypt(encrypted_message)
-        print(f"Padded Plaintext after decryption: {paddedPlaintext}")
+        # print(f"Padded Plaintext after decryption: {paddedPlaintext}")
         plaintext = unpadding(paddedPlaintext)
         return plaintext
             
