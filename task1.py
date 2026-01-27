@@ -1,4 +1,33 @@
 import random
+from Crypto.Hash import SHA256
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+
+# From Module 2 Task 1
+def padding(data):
+    l = AES.block_size - (len(data) % AES.block_size)
+    padded_data = bytes([l]) * l
+    return data + padded_data
+
+# From Module 2 Task 2
+def unpadding(data):
+    data_size = len(data)
+    padding_count = data[-1]
+    return data[:-padding_count]
+
+# From Module 2 Task 1
+def encCBC(plaintext, cipher, iv):
+    padded_plaintext = padding(plaintext.encode())
+    print(f"Padded Plaintext: {padded_plaintext}")
+    ciphertext = b""
+    previous_block = iv
+    for i in range(0, len(padded_plaintext), AES.block_size):
+        block = padded_plaintext[i:i+AES.block_size]
+        block_to_encrypt = bytes(a ^ b for a, b in zip(block, previous_block))
+        encrypted_block = cipher.encrypt(block_to_encrypt)
+        ciphertext += encrypted_block
+        previous_block = encrypted_block
+    return ciphertext
 
 class User:
     def __init__(self, name):
@@ -7,6 +36,7 @@ class User:
         self.pub_key = None
         #could be made a list for many pub keys later??
         self.other_user_pub_key = None
+        self.secret = None
 
     def generate_priv_key(self, q):
         self.priv_key =random.randint(1, q-1)
@@ -28,7 +58,20 @@ class User:
             raise ValueError("Other user's public key not received yet.")
 
         else:
-            return pow(self.other_user_pub_key, self.priv_key, q)
+            self.secret = pow(self.other_user_pub_key, self.priv_key, q)
+
+    #key is sha_256 hash of secret key truncated to 16 bytes
+    def encode(self, message, key, iv):
+        # returns encoded message with hash generated from most recent secret key
+        if(self.secret is None):
+            raise ValueError("Secret key not generated yet.")
+        
+        cipher = AES.new(key, AES.MODE_ECB)
+        encrypted_message = encCBC(message, cipher, iv)
+        return encrypted_message
+    
+    def decode(self, encrypted_message, iv):
+            
 
 # assume both A and B get same IV
 
@@ -58,8 +101,29 @@ print(f"Alice's Public Key: {hex(alice.pub_key)}")
 print(f"Bob received Alice's Public Key: {hex(bob.other_user_pub_key)}")
 print(f"Alice received Bob's Public Key: {hex(alice.other_user_pub_key)}")
 
-bob_secret = bob.secret_key(q)
-alice_secret = alice.secret_key(q)
+bob.secret_key(q)
+alice.secret_key(q)
 
-print(f"Bob's Secret Key: {hex(bob_secret)}")
-print(f"Alice's Secret Key: {hex(alice_secret)}")
+print(f"Bob's Secret Key: {(bob.secret)}")
+print(f"Alice's Secret Key: {(alice.secret)}")
+
+bob_sha256_hash = SHA256.new()
+bob_sha256_hash.update(bob.secret.to_bytes())
+bob_encoded_key = bob_sha256_hash.digest()[:16]
+print("Bob's Encoded Key:", bob_encoded_key.hex())
+
+alice_sha256_hash = SHA256.new()
+alice_sha256_hash.update(alice.secret.to_bytes())
+alice_encoded_key = alice_sha256_hash.digest()[:16]
+print("Alice's Encoded Key:", alice_encoded_key.hex())
+
+bob_message = "Hello Alice!"
+alice_message = "Hello Bob!"
+
+# we assume they get the same IV, we will generate one randomly here
+iv = get_random_bytes(16)
+print("IV:", iv.hex())
+
+bob_encoded_message = bob.encode(bob_message, bob_encoded_key, iv)
+alice_encoded_message = alice.encode(alice_message, alice_encoded_key, iv)
+
