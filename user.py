@@ -2,7 +2,6 @@ import random
 from Crypto.Cipher import AES
 from encryption import padding, unpadding
 
-
 class User:
     def __init__(self, name):
         self.name = name

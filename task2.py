@@ -1,4 +1,5 @@
 from user import User
+from mim import ManInTheMiddle
 from Crypto.Hash import SHA256
 from Crypto.Random import get_random_bytes
 
@@ -8,7 +9,7 @@ alpha = 0xA4D1CBD5C3FD34126765A442EFB99905F8104DD258AC507FD6406CFF14266D31266FEA
 #Normal key gen
 bob = User('Bob')
 alice = User('Alice')
-mallory = User('Mallory')
+mallory = ManInTheMiddle('Mallory')
 
 bob.generate_priv_key(q)
 bob.generate_pub_key(alpha, q)
@@ -16,16 +17,21 @@ bob.generate_pub_key(alpha, q)
 alice.generate_priv_key(q)
 alice.generate_pub_key(alpha, q)
 
-#Mallory Does Something
-mallory.receive_pub_key(alice.pub_key)
-mallory.receive_pub_key(bob.pub_key)
+mallory.generate_priv_key(q)
+mallory.generate_pub_key(alpha, q)
 
-bob.receive_pub_key(q)
-alice.receive_pub_key(q)
+#Mallory Gets Public Keys of Both other Users
+mallory.receive_pub_key(alice.pub_key, 'Alice')
+mallory.receive_pub_key(bob.pub_key, 'Bob')
+
+bob.receive_pub_key(mallory.pub_key)
+alice.receive_pub_key(mallory.pub_key)
 
 #Computation continues
 bob.secret_key(q)
 alice.secret_key(q)
+mallory.secret_key(q, 'Alice')
+mallory.secret_key(q, 'Bob')
 
 bob_sha256_hash = SHA256.new()
 bob_sha256_hash.update(bob.secret)
@@ -55,9 +61,8 @@ alice_encoded_message = alice.encode(alice_message, alice_symm_key, iv)
 print(f"Bob's Encoded Message: {bob_encoded_message}")
 print(f"Alice's Encoded Message: {alice_encoded_message}")
 
-alice_decoded_message = mallory.decode(alice_encoded_message, bob_symm_key, iv)
-bob_decoded_message = mallory.decode(bob_encoded_message, alice_symm_key, iv)
+mallory_decoded_message_a = mallory.decode(alice_encoded_message, bob_symm_key, iv)
+mallory_decoded_message_b = mallory.decode(bob_encoded_message, alice_symm_key, iv)
 
-print(f"Bob's Decoded Message: {bob_decoded_message}")
-print(f"Alice's Decoded Message: {alice_decoded_message}")
-
+print(f"Bob's Decoded Message: {mallory_decoded_message_b}")
+print(f"Alice's Decoded Message: {mallory_decoded_message_a}")
