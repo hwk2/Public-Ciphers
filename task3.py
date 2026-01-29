@@ -123,7 +123,7 @@ def main():
     num2 = int(msg2.hex(), 16)
 
     sig1 = pow(num1, PR_A[0], PR_A[1])
-    sig2 = pow(num2, PU_A[0], PU_A[1])
+    sig2 = pow(num2, PR_A[0], PR_A[1])
 
     #Mallory gets both the msgs and the signatures
     #Mallory creates a new message and a valid signature
