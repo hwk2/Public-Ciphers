@@ -116,5 +116,22 @@ def main():
     print("\n-----------------------------")
     print("Part 3 -- Signature Malleability")
 
+    #Alice computes each of these messages using the private key
+    msg1 = "hello bob!".encode("ascii")
+    msg2 = "How are you?".encode("ascii")
+    num1 = int(msg1.hex(), 16)
+    num2 = int(msg2.hex(), 16)
+
+    sig1 = pow(num1, PR_A[0], PR_A[1])
+    sig2 = pow(num2, PU_A[0], PU_A[1])
+
+    #Mallory gets both the msgs and the signatures
+    #Mallory creates a new message and a valid signature
+
+    sig3 = (sig1 * sig2) % PU_A[1]
+    num3 = (num1 * num2) % PU_A[1]
+
+    print(pow(sig3, PU_A[0], PU_A[1]))
+    print(num3)
 
 main()
