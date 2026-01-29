@@ -89,7 +89,7 @@ def main():
     r = random.randrange(2, PU_A[1])
     while math.gcd(r, PU_A[1]) != 1:
         r = random.randrange(2, PU_A[1])
-    cPrime = (c * pow(r, PU_A[0], PU_A[1])) % PU_A[1]
+    cPrime = pow(r, PU_A[0], PU_A[1])
 
     # Step 4: Alice calculates s
     sPrime = pow(cPrime, PR_A[0], PR_A[1])
@@ -99,19 +99,22 @@ def main():
 
     # Step 6: Alice encrypts message with k and sends c_0
     msg = "Hi Bob!"
+    print("Original:", msg)
     cipher = AES.new(k, AES.MODE_CBC)
     iv = cipher.iv
     c_0 = cipher.encrypt(pad(msg.encode(), AES.block_size))
 
     # Step 7: Mallory can decrypt message, and Bob cannot
-    r_inv = pow(r, -1, PU_A[1])
-    sRecovered = (sPrime * r_inv) % PU_A[1]
-    sPrime2 = (sRecovered * r) % PU_A[1]
-    kRecovered = SHA256.new(str(sPrime2).encode()).digest()
+    sPrime2 = r
 
+    kRecovered = SHA256.new(str(sPrime2).encode()).digest()
     cipher = AES.new(kRecovered, AES.MODE_CBC, iv=iv)
     mRecovered = unpad(cipher.decrypt(c_0), AES.block_size)
-    print(mRecovered)
+    print("Decrypted:", mRecovered.decode())
+
+
+    print("\n-----------------------------")
+    print("Part 3 -- Signature Malleability")
 
 
 main()
