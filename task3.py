@@ -85,12 +85,19 @@ def main():
 
     # Step 3: Bob sends c to Alice (Mallory Intercepts)
     # Step 3.5: Mallory computes c'
+    PU_M, PR_M = gen_key()
+    cPrime = c * pow(PR_M[0], PU_A[0], PU_A[1])
 
-    # Step 4: Alice calculates s
+    # Step 4: Alice receives cPrime and calculates sPrime
+    sPrime = pow(cPrime, PR_A[0], PR_A[1])
 
     # Step 5: Alice calculates k with SHA256(s)
+    k = SHA256.new(str(sPrime).encode()).digest()
 
     # Step 6: Alice encrypts message with k and sends c_0
+    msg = "Hi Bob!"
+    cipher = AES.new(k, AES.MODE_CBC)
+    c_0 = cipher.encrypt(pad(msg.encode(), AES.block_size))
 
     # Step 7: Mallory can decrypt message, and Bob cannot
 
