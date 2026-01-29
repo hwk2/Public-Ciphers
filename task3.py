@@ -1,5 +1,8 @@
 from Crypto.Util import number
 from Crypto.Hash import SHA256
+from Crypto.Random import get_random_bytes
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
 
 n_length = 2048
 FLAG = True
@@ -70,17 +73,29 @@ def main():
     print("----------------------")
     print("Part 2\n")
 
-    msg = "Hey, where are you?"
-    num = int(msg.encode("ascii").hex(), 16)
+    msg = "Hey, where are you?".encode()
+    num = int(msg.hex(), 16)
 
     encrypted = encrypt(num, PU)
 
     #This message c' is sent off and Alice decrypts it
     decrypted = decrypt(encrypted, PR)
 
-    #Both Mallory and Alice compute SHA256(num)
-    k = SHA256.new(num).digest()
+    #Both Mallory and Alice compute SHA256(num) and then Mallory can find c_0
+    k = SHA256.new(msg).digest()
 
+    # assume the iv is part of it
+    iv = get_random_bytes(16)
+    cipher = AES.new(k, AES.MODE_CBC, iv = iv)
+
+    plaintext = "At the mall in Legends Comic Store".encode()
+    ciphertext = cipher.encrypt(pad(plaintext, AES.block_size))
+    transmission = iv + ciphertext
+
+    #Mallory (with the key) can decrypt the message
+    cipher = AES.new(k, AES.MODE_CBC, iv=iv)
+    original = unpad(cipher.decrypt(ciphertext), AES.block_size).decode()
+    print(original)
 
 
 
