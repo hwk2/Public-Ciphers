@@ -73,7 +73,30 @@ def main():
     print("----------------------")
     print("Part 2\n")
 
-    msg = "Hey, where are you?".encode()
+    # Step 0: Alice creates keys (PU, PR)
+    PU_A, PR_A = gen_key()
+
+    # Step 1: Alice sends (n, e) (PU) to Bob (& Mallory)
+
+    # Step 2: Bob computes s. 
+
+    PU_B, PR_B = gen_key()
+    c = pow(PR_B[0], PU_A[0], PU_A[1])  # c = s^e mod n_A
+
+    # Step 3: Bob sends c to Alice (Mallory Intercepts)
+    # Step 3.5: Mallory computes c'
+
+    # Step 4: Alice calculates s
+
+    # Step 5: Alice calculates k with SHA256(s)
+
+    # Step 6: Alice encrypts message with k and sends c_0
+
+    # Step 7: Mallory can decrypt message, and Bob cannot
+
+
+    
+    msg = "Hey, where are you?".encode("ascii")
     num = int(msg.hex(), 16)
 
     encrypted = encrypt(num, PU)
