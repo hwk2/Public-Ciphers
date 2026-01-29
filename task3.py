@@ -3,6 +3,8 @@ from Crypto.Hash import SHA256
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
+import random
+import math
 
 n_length = 2048
 FLAG = True
@@ -76,19 +78,20 @@ def main():
     # Step 0: Alice creates keys (PU, PR)
     PU_A, PR_A = gen_key()
 
-    # Step 1: Alice sends (n, e) (PU) to Bob (& Mallory)
-
-    # Step 2: Bob computes s. 
-
-    PU_B, PR_B = gen_key()
-    c = pow(PR_B[0], PU_A[0], PU_A[1])  # c = s^e mod n_A
+    # Step 2: Bob computes s
+    s = random.randrange(2, PU_A[1])
+    while math.gcd(s, PU_A[1]) != 1:
+        s = random.randrange(2, PU_A[1])
+    c = pow(s, PU_A[0], PU_A[1])
 
     # Step 3: Bob sends c to Alice (Mallory Intercepts)
     # Step 3.5: Mallory computes c'
-    PU_M, PR_M = gen_key()
-    cPrime = c * pow(PR_M[0], PU_A[0], PU_A[1])
+    r = random.randrange(2, PU_A[1])
+    while math.gcd(r, PU_A[1]) != 1:
+        r = random.randrange(2, PU_A[1])
+    cPrime = (c * pow(r, PU_A[0], PU_A[1])) % PU_A[1]
 
-    # Step 4: Alice receives cPrime and calculates sPrime
+    # Step 4: Alice calculates s
     sPrime = pow(cPrime, PR_A[0], PR_A[1])
 
     # Step 5: Alice calculates k with SHA256(s)
@@ -97,37 +100,18 @@ def main():
     # Step 6: Alice encrypts message with k and sends c_0
     msg = "Hi Bob!"
     cipher = AES.new(k, AES.MODE_CBC)
+    iv = cipher.iv
     c_0 = cipher.encrypt(pad(msg.encode(), AES.block_size))
 
     # Step 7: Mallory can decrypt message, and Bob cannot
+    r_inv = pow(r, -1, PU_A[1])
+    sRecovered = (sPrime * r_inv) % PU_A[1]
+    sPrime2 = (sRecovered * r) % PU_A[1]
+    kRecovered = SHA256.new(str(sPrime2).encode()).digest()
 
-
-    
-    msg = "Hey, where are you?".encode("ascii")
-    num = int(msg.hex(), 16)
-
-    encrypted = encrypt(num, PU)
-
-    #This message c' is sent off and Alice decrypts it
-    decrypted = decrypt(encrypted, PR)
-
-    #Both Mallory and Alice compute SHA256(num) and then Mallory can find c_0
-    k = SHA256.new(msg).digest()
-
-    # assume the iv is part of it
-    iv = get_random_bytes(16)
-    cipher = AES.new(k, AES.MODE_CBC, iv = iv)
-
-    plaintext = "At the mall in Legends Comic Store".encode()
-    ciphertext = cipher.encrypt(pad(plaintext, AES.block_size))
-    transmission = iv + ciphertext
-
-    #Mallory (with the key) can decrypt the message
-    cipher = AES.new(k, AES.MODE_CBC, iv=iv)
-    original = unpad(cipher.decrypt(ciphertext), AES.block_size).decode()
-    print(original)
-
-
+    cipher = AES.new(kRecovered, AES.MODE_CBC, iv=iv)
+    mRecovered = unpad(cipher.decrypt(c_0), AES.block_size)
+    print(mRecovered)
 
 
 main()
