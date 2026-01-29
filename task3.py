@@ -89,7 +89,7 @@ def main():
     r = random.randrange(2, PU_A[1])
     while math.gcd(r, PU_A[1]) != 1:
         r = random.randrange(2, PU_A[1])
-    cPrime = pow(r, PU_A[0], PU_A[1])
+    cPrime = 0  #{0,1, k*n} where k is any integer
 
     # Step 4: Alice calculates s
     sPrime = pow(cPrime, PR_A[0], PR_A[1])
@@ -105,7 +105,7 @@ def main():
     c_0 = cipher.encrypt(pad(msg.encode(), AES.block_size))
 
     # Step 7: Mallory can decrypt message, and Bob cannot
-    sPrime2 = r
+    sPrime2 = cPrime
 
     kRecovered = SHA256.new(str(sPrime2).encode()).digest()
     cipher = AES.new(kRecovered, AES.MODE_CBC, iv=iv)
